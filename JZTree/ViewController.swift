@@ -10,7 +10,7 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var hv = JZHierarchicalView.init(frame: .zero)
+    var hv = JZTreeView.init(frame: .zero)
     
     override func viewDidLoad() {
         super.viewDidLoad()

@@ -1,6 +1,6 @@
 //
-//  JZHierarchicalView.swift
-//  JZHierarchicalView
+//  JZTreeView.swift
+//  JZTreeView
 //
 //  Created by wizet on 2019/10/26.
 //  Copyright © 2019 wizet. All rights reserved.
@@ -11,7 +11,7 @@ import UIKit
 
 
 /// 分等级视图 (最好用iOS13 colectionView新的接口实现)
-public final class JZHierarchicalView: UIView {
+public final class JZTreeView: UIView {
     
     /// .isExpanded 必须为truue
     public var rootTreeNode: JZTreeNode = JZTreeNode.node()
@@ -52,7 +52,7 @@ public final class JZHierarchicalView: UIView {
 }
 
 
-extension JZHierarchicalView: UICollectionViewDataSource {
+extension JZTreeView: UICollectionViewDataSource {
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.rootTreeNode.lines.count
     }
@@ -70,7 +70,7 @@ extension JZHierarchicalView: UICollectionViewDataSource {
 }
 
 
-extension JZHierarchicalView: UICollectionViewDelegate {
+extension JZTreeView: UICollectionViewDelegate {
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let treeNode = self.rootTreeNode.lines[indexPath.row]
         

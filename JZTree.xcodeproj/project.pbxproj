@@ -15,7 +15,7 @@
 		405F686223641BE8007ADCFA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 405F686023641BE8007ADCFA /* LaunchScreen.storyboard */; };
 		405F686D23641BE8007ADCFA /* JZTreeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405F686C23641BE8007ADCFA /* JZTreeTests.swift */; };
 		405F687823641BE8007ADCFA /* JZTreeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405F687723641BE8007ADCFA /* JZTreeUITests.swift */; };
-		405F688623641C10007ADCFA /* JZHierarchicalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405F688523641C10007ADCFA /* JZHierarchicalView.swift */; };
+		405F688623641C10007ADCFA /* JZTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405F688523641C10007ADCFA /* JZTreeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,7 +50,7 @@
 		405F687323641BE8007ADCFA /* JZTreeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JZTreeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		405F687723641BE8007ADCFA /* JZTreeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZTreeUITests.swift; sourceTree = "<group>"; };
 		405F687923641BE8007ADCFA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		405F688523641C10007ADCFA /* JZHierarchicalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZHierarchicalView.swift; sourceTree = "<group>"; };
+		405F688523641C10007ADCFA /* JZTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JZTreeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,7 +104,7 @@
 				405F685523641BE4007ADCFA /* AppDelegate.swift */,
 				405F685723641BE4007ADCFA /* SceneDelegate.swift */,
 				405F685923641BE4007ADCFA /* ViewController.swift */,
-				405F688523641C10007ADCFA /* JZHierarchicalView.swift */,
+				405F688523641C10007ADCFA /* JZTreeView.swift */,
 				405F685B23641BE4007ADCFA /* Main.storyboard */,
 				405F685E23641BE8007ADCFA /* Assets.xcassets */,
 				405F686023641BE8007ADCFA /* LaunchScreen.storyboard */,
@@ -265,7 +265,7 @@
 				405F685A23641BE4007ADCFA /* ViewController.swift in Sources */,
 				405F685623641BE4007ADCFA /* AppDelegate.swift in Sources */,
 				405F685823641BE4007ADCFA /* SceneDelegate.swift in Sources */,
-				405F688623641C10007ADCFA /* JZHierarchicalView.swift in Sources */,
+				405F688623641C10007ADCFA /* JZTreeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
