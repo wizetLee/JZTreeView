@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, JZTreeViewProtocol {
     
     var hv = JZTreeView.init(frame: .zero)
     
@@ -26,42 +26,67 @@ class ViewController: UIViewController {
         hv.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 0).isActive = true
         
         
-        let rootTreeNode: JZTreeNode = JZTreeNode.rootNode()
         
-        let l2 = JZTreeNode.node()
-        let l2_1 = JZTreeNode.node()
-        l2_1.chlidren = [JZTreeNode.leaf()]
+        let rootTreeNode: JZTreeNode = JZTreeNode.rootNode(JZTreeTestCell.rid)
         
-        let l2_2 = JZTreeNode.node()
-        l2_2.chlidren = [JZTreeNode.leaf(), JZTreeNode.leaf()]
+        let l2 = JZTreeNode.node(JZTreeTestCell.rid)
+        let l2_1 = JZTreeNode.node(JZTreeTestCell.rid)
+        l2_1.chlidren = [JZTreeNode.leaf(JZTreeTestCell.rid)]
         
-        rootTreeNode.chlidren = [l2, l2_1, l2_2]
+        let l2_2 = JZTreeNode.node(JZTreeTestCell.rid)
+        l2_2.chlidren = [JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid)]
+        
+        let l2_3 = JZTreeNode.leaf(JZTreeTestCell.rid)
+        rootTreeNode.chlidren = [l2, l2_1, l2_2, l2_3]
         
         
-        let l3 = JZTreeNode.node()
-        l3.chlidren = [JZTreeNode.leaf()]
+        let l3 = JZTreeNode.node(JZTreeTestCell.rid)
+        l3.chlidren = [JZTreeNode.leaf(JZTreeTestCell.rid)]
         l2.chlidren = [l3]
         
         
-        let l4 = JZTreeNode.node()
-        let l4_1 = JZTreeNode.node()
-        let l4_2 = JZTreeNode.node()
-        l4.chlidren = [JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf()]
-        l4_1.chlidren = [JZTreeNode.leaf(), JZTreeNode.leaf()]
+        let l4 = JZTreeNode.node(JZTreeTestCell.rid)
+        let l4_1 = JZTreeNode.node(JZTreeTestCell.rid)
+        let l4_2 = JZTreeNode.node(JZTreeTestCell.rid)
+        l4.chlidren = [JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid)]
+        l4_1.chlidren = [JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid)]
         
         
-        let l5 = JZTreeNode.node()
-        l4_2.chlidren = [JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), JZTreeNode.leaf(), l5]
-        l5.chlidren = [JZTreeNode.leaf()]
+        let l5 = JZTreeNode.node(JZTreeTestCell.rid)
+        l4_2.chlidren = [JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), JZTreeNode.leaf(JZTreeTestCell.rid), l5]
+        l5.chlidren = [JZTreeNode.leaf(JZTreeTestCell.rid)]
         
         l3.chlidren = [l4, l4_1, l4_2]
         
         print("深度为：\(rootTreeNode.depth())")
+        hv.delegate = self
+        self.hv.registerCellClass(cellTypePairs: [JZTreeTestCell.rid : JZTreeTestCell.self])
         
+        // 更新的操作
         self.hv.rootTreeNode = rootTreeNode
         self.hv.reload()
+        
     }
     
+    
+    func collectionView(cell: UICollectionViewCell, cellForItem: JZTreeNode) {
+        if let cell = cell as? JZTreeTestCell {
+            cell.update(treeNode: cellForItem)
+            
+            cell.longPressGestureClosure = { [weak self] in
+                guard let self = self else { return }
+                
+                //
+            }
+        }
+    }
+    func collectionView(cell: UICollectionViewCell, didSelectItem: JZTreeNode) {
+        if let cell = cell as? JZTreeTestCell {
+            UIView.animate(withDuration: 0.25) {
+                cell.update(treeNode: didSelectItem)
+            }
+        }
+    }
     
 }
 

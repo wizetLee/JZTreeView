@@ -10,11 +10,19 @@ import Foundation
 import UIKit
 
 
+@objc protocol JZTreeViewProtocol: NSObjectProtocol {
+    @objc func collectionView(cell: UICollectionViewCell, cellForItem treeNode: JZTreeNode)
+    @objc func collectionView(cell: UICollectionViewCell, didSelectItem treeNode: JZTreeNode)
+}
+
+
 /// 分等级视图 (最好用iOS13 colectionView新的接口实现)
 public final class JZTreeView: UIView {
     
-    /// .isExpanded 必须为truue
-    public var rootTreeNode: JZTreeNode = JZTreeNode.node()
+    weak var delegate: JZTreeViewProtocol? = nil
+    
+    /// .isExpanded 必须为true， rootNode 是不绘制的，所以不会成为cell的一部分，因此rid随意设置即可
+    public var rootTreeNode: JZTreeNode = JZTreeNode.node("")
     
     public private(set) lazy var collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout.init()
@@ -24,7 +32,6 @@ public final class JZTreeView: UIView {
         
         collectionView.delegate = self
         collectionView.dataSource = self
-        collectionView.register(JZTreeCollectionViewCell.self, forCellWithReuseIdentifier: JZTreeCollectionViewCell.rid)
         return collectionView
     }()
     
@@ -49,6 +56,50 @@ public final class JZTreeView: UIView {
         self.rootTreeNode.lines = self.rootTreeNode.makeLines(level: self.rootTreeNode.level)
         self.collectionView.reloadData()
     }
+    
+    /// 删除节点（如果是leaf类型只删除自己，如果是node类型则包括node下的node以leaf）
+    //FIXME: 待完成 考虑插入和删除的应如何操作
+//    public func deleteTreeNode(treeNode: JZTreeNode) {
+//        // 保存旧模型的轨迹 - 对比新模型的轨迹，代码处理treeNode的数据
+//        let lines = self.rootTreeNode.lines
+//        if lines.contains(treeNode) == true {
+//            if let index = lines.firstIndex(of: treeNode)
+//                , lines.count > index {
+//                // 执行删除操作
+//                let at = self.childrenIndexPath(index: index, treeNode: treeNode)
+//                #if DEBUG
+//                print("删除位置为：\(at)的treeNode")
+//                #endif
+//
+//            }
+//        } else {
+//            // 删除不存在的节点
+//        }
+//    }
+//
+//    /// 插入的位置 （插入到末尾）
+//    public func insertTreeNode(treeNode: JZTreeNode, atNode: JZTreeNode) {
+//        if atNode.isNode {
+//            let lines = self.rootTreeNode.lines
+//            if lines.contains(atNode) == true {
+//                if let index = lines.firstIndex(of: treeNode)
+//                               , lines.count > index {
+//                    let at = self.childrenIndexPath(index: index, treeNode: treeNode)
+//
+//                    self.rootTreeNode.lines = self.rootTreeNode.makeLines(level: self.rootTreeNode.level)
+//                    if at.count > 0 {
+//                        self.collectionView.insertItems(at: at)
+//                    }
+//                    #if DEBUG
+//                    print("插入位置为：\(at)的treeNode")
+//                    #endif
+//                    atNode.chlidren.append(treeNode)
+//                }
+//            }
+//        } else {
+//            // 智能插入到node中
+//        }
+//    }
 }
 
 
@@ -61,14 +112,12 @@ extension JZTreeView: UICollectionViewDataSource {
         let treeNode = self.rootTreeNode.lines[indexPath.row]
         let rid = treeNode.rid
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: rid, for: indexPath)
-        if let cell = cell as? JZTreeCollectionViewCell {
-            cell.update(treeNode: treeNode)
-        }
+
+        self.delegate?.collectionView(cell: cell, cellForItem: treeNode)
         
         return cell
     }
 }
-
 
 extension JZTreeView: UICollectionViewDelegate {
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -80,8 +129,11 @@ extension JZTreeView: UICollectionViewDelegate {
                 let at = self.childrenIndexPath(index: indexPath.row, treeNode: treeNode)
                 treeNode.isExpanded = false
                 
+                
                 self.rootTreeNode.lines = self.rootTreeNode.makeLines(level: self.rootTreeNode.level)
-                self.collectionView.deleteItems(at: at)
+                if at.count > 0 {
+                    self.collectionView.deleteItems(at: at)
+                }
             } else {
                 // 伸展动画
                 treeNode.isExpanded = true
@@ -89,15 +141,15 @@ extension JZTreeView: UICollectionViewDelegate {
                 
                 
                 self.rootTreeNode.lines = self.rootTreeNode.makeLines(level: self.rootTreeNode.level)
-                self.collectionView.insertItems(at: at)
+                if at.count > 0 {
+                    self.collectionView.insertItems(at: at)
+                }
             }
         }
         
         /// 刷新UI
-        if let cell = collectionView.cellForItem(at: indexPath) as? JZTreeCollectionViewCell {
-            UIView.animate(withDuration: 0.25) {
-                cell.update(treeNode: treeNode)
-            }
+        if let cell = collectionView.cellForItem(at: indexPath) {
+            self.delegate?.collectionView(cell: cell, didSelectItem: treeNode)
         }
         
         collectionView.deselectItem(at: indexPath, animated: true)
@@ -121,37 +173,52 @@ extension JZTreeView: UICollectionViewDelegate {
         }
         return at
     }
+    
+    
+    /// cell 注册
+    /// - Parameter cellTypePairs: key as Cell Reuse Identifier，value as cell type
+    public func registerCellClass(cellTypePairs: [String: UICollectionViewCell.Type]) {
+        for element in cellTypePairs {
+            collectionView.register(element.value, forCellWithReuseIdentifier: element.key)
+            #if DEBUG
+            print("注册了cell: \(String.init(describing: element.self))")
+            #endif
+        }
+    }
 }
 
 
 
-
-
-public class JZTreeNode {
+/// JZTreeView 使用的模型
+@objc public class JZTreeNode: NSObject {
     
-    /// 复用ID，可通过修改它达到使用自定义cell的目的（注意，自定义cell均需要继承JZTreeCollectionViewCell
-    /// FIXME：未完成：当然，也可以自定义类型cell，需要将cell需要处理的接口作为回调，在外部实现， 注册接口外放
-    var rid = JZTreeCollectionViewCell.rid
+    /// Cell Reuse Identifier
+    let rid: String
+    
+    public init(_ rid: String) {
+        self.rid = rid
+        super.init()
+    }
     
     /// 初始化一个节点类型
-    static func node()->JZTreeNode {
-        let treeNode =  JZTreeNode()
+    static func node(_ rid: String)->JZTreeNode {
+        let treeNode =  JZTreeNode(rid)
         treeNode.isNode = true
         treeNode.isExpanded = false
         return treeNode
     }
     
     /// 初始化rootNode的类型，注意isExpanded必须为true
-    static func rootNode()->JZTreeNode {
-        let treeNode =  JZTreeNode()
+    static func rootNode(_ rid: String)->JZTreeNode {
+        let treeNode = JZTreeNode(rid)
         treeNode.isNode = true
         treeNode.isExpanded = true
         return treeNode
     }
     
     /// 初始化一个叶子类型
-    static func leaf()->JZTreeNode {
-        let treeNode =  JZTreeNode()
+    static func leaf(_ rid: String)->JZTreeNode {
+        let treeNode =  JZTreeNode(rid)
         return treeNode
     }
     
@@ -177,7 +244,7 @@ public class JZTreeNode {
     }
     
     
-    /// 计算层级的深度（包括不展开的部分）
+    /// 计算层级的深度（包括不展开的部分）， 不建议频繁调用此方法
     /// 不包含根节点，所以-1
     func depth()->Int {
         return self.calculateDepth() - 1
@@ -243,112 +310,3 @@ public class JZTreeCollectionView: UICollectionView, UIGestureRecognizerDelegate
         return false
     }
 }
-
-
-
-
-
-// 默认类型
-class JZTreeCollectionViewCell: UICollectionViewCell {
-    
-    static let rid = "JZTreeCollectionViewCell"
-    
-    let containerView: UIView = UIView()
-    
-    let label = UILabel()
-    
-    let imageView: UIImageView = UIImageView()
-    
-    var leftInset: CGFloat = 10.0
-    
-    lazy fileprivate var indentContraint: NSLayoutConstraint = {
-        return self.containerView.leftAnchor.constraint(equalTo: self.contentView.leftAnchor, constant: self.leftInset)
-    }()
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        self.layer.borderColor = UIColor.purple.cgColor
-        self.layer.borderWidth = 1
-        
-        
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(containerView)
-        indentContraint.isActive = true
-        containerView.topAnchor.constraint(equalTo: self.contentView.topAnchor, constant: 0).isActive = true
-        containerView.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: 0).isActive = true
-        containerView.trailingAnchor.constraint(equalTo: self.contentView.trailingAnchor, constant: 0).isActive = true
-        
-        
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        containerView.addSubview(imageView)
-        imageView.widthAnchor.constraint(equalToConstant: 25.0).isActive = true
-        imageView.heightAnchor.constraint(equalToConstant: 25.0).isActive = true
-        imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 0).isActive = true
-        imageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor, constant: 0).isActive = true
-        
-        
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = UIFont.preferredFont(forTextStyle: .headline)
-        label.adjustsFontForContentSizeCategory = true
-        containerView.addSubview(label)
-        label.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 0).isActive = true
-        label.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 0).isActive = true
-        label.leadingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: 10).isActive = true
-        label.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: 0).isActive = true
-    }
-    
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override var isHighlighted: Bool {
-        didSet {
-            if let innerTreeNode = innerTreeNode {
-                self.update(treeNode: innerTreeNode)
-            }
-        }
-    }
-    override var isSelected: Bool {
-        didSet {
-            if let innerTreeNode = innerTreeNode {
-                self.update(treeNode: innerTreeNode)
-            }
-        }
-    }
-    
-    
-    private var innerTreeNode: JZTreeNode? = nil
-    
-    /// 刷新
-    public func update(treeNode: JZTreeNode) {
-        innerTreeNode = treeNode
-        // 更新
-        label.text = "level: \(treeNode.level) isNode: \(treeNode.isNode)"
-        
-        // 更具内容更新inset
-        self.leftInset = 10.0 + CGFloat(treeNode.level) * 25.0
-        self.indentContraint.constant = self.leftInset
-        
-        let highlighted = (self.isHighlighted || self.isSelected)
-        
-        if treeNode.isNode == true {
-            let image = UIImage(systemName: "chevron.right.circle.fill")
-            self.imageView.image = image
-            if treeNode.isExpanded == true {
-                self.imageView.transform = CGAffineTransform(rotationAngle: CGFloat.pi / 2)
-            } else {
-                self.imageView.transform = CGAffineTransform.identity
-            }
-        } else {
-            let image = UIImage(systemName: "circle.fill")
-            self.imageView.image = image
-        }
-        
-        // 颜色修改
-        self.imageView.tintColor = highlighted ? .gray : UIColor(displayP3Red: 100.0 / 255.0, green: 149.0 / 255.0, blue: 237.0 / 255.0, alpha: 1.0)
-    }
-}
-
-
